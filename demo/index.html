@@ -6,28 +6,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        html,
-        body {
+        * {
             margin: 0;
             padding: 0;
+        }
+
+        html,
+        body {
             height: 100%;
             width: 100%;
+            position: relative;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        .shop-list {
+            margin-top: 100px;
+            position: absolute;
+            left: 50%;
+            margin-left: -250px;
+            height: 500px;
+            width: 500px;
+            background: pink;
+            opacity: .6;
+        }
+
+        .shop-detail {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: space-around;
+            margin: 5px 0;
+            height: 150px;
+            background: greenyellow;
+        }
+
+        span:nth-child(2n) {
+            cursor: pointer;
+        }
+
+        .shop-car {
+            height: 200px;
+            width: 200px;
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            background: yellow;
+            text-align: center;
+            line-height: 200px;
         }
     </style>
-    <script src="./index.umd.js"></script>
+
 </head>
 
 <body>
-    <!-- <a href="https://github.com/ChongYu-Yease/rollup-ts-template.git">github地址</a> -->
+    <div class="shop-car">购物车</div>
+    <ul class="shop-list">
+        <li class="shop-detail ">
+            <span class="shop-detail-1">商品1</span>
+            <span onClick="handleClickShop('shop-detail-1')">加入购物车</span>
+        </li>
+        <li class="shop-detail ">
+            <span class="shop-detail-2">商品2</span>
+            <span onClick="handleClickShop('shop-detail-2')">加入购物车</span>
+        </li>
+        <li class="shop-detail ">
+            <span class="shop-detail-3">商品3</span>
+            <span onClick="handleClickShop('shop-detail-3')">加入购物车</span>
+        </li>
+    </ul>
+    <script src="./index.umd.js"></script>
+    <script lang="typescript">
+
+        function handleClickShop(className) {
+
+            const sourceClassName = "." + className
+            const sourceNode = document.querySelector(sourceClassName)
+            const sourceNodeStyle = sourceNode.getBoundingClientRect()
+            const copyNode = sourceNode.cloneNode(true)
+            copyNode.style.position = 'absolute'
+            copyNode.style.zIndex = '999'
+            copyNode.style.top = `${sourceNodeStyle.top}px`
+            copyNode.style.left = `${sourceNodeStyle.left}px`
+            copyNode.style.width = 'auto'
+            copyNode.style.height = `${sourceNodeStyle.height}px`
+            copyNode.className = 'copy-node'
+            const targetClassName = "." + "shop-car"
+            const maskLayerNode = document.createElement('div')
+            maskLayerNode.style.position = 'absolute'
+            maskLayerNode.style.zIndex = '99'
+            maskLayerNode.style.top = '0px'
+            maskLayerNode.style.bottom = '0px'
+            maskLayerNode.style.right = '0px'
+            maskLayerNode.style.left = '0px'
+
+            maskLayerNode.appendChild(copyNode)
+            document.body.appendChild(maskLayerNode)
+            const moveClassName = ".copy-node"
+
+            let aaa = new bezierAnimation.Bezier({
+                radian: 0.001,
+                time: 2000,
+                sourceClassName,
+                targetClassName,
+                moveClassName,
+                callback: () => {
+                    maskLayerNode.removeChild(copyNode)
+                    document.body.removeChild(maskLayerNode)
+                }
+            })
+            aaa.move()
+        }
+
+    </script>
+
 </body>
 
 </html>
-<script lang="typescript">
-    const examples = new example.Example()
-    // console.log(example)
-    examples.initPage("div", "这是一个基于rollup 打包ts 的模版,支持线上打包代码压缩、开发环境热更新", { "font-size": "20px" })
-
-</script>

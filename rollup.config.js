@@ -14,12 +14,12 @@ export default {
         {
             format: 'umd',
             file: 'dist/index.umd.js',
-            name: 'example',
+            name: 'bezierAnimation',
         },
         {
             format: 'umd',
             file: 'demo/index.umd.js',
-            name: 'example',
+            name: 'bezierAnimation',
         },
         {
             format: 'cjs',

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="box">
+        <div class="goods-box">
+            <div class="goods-img">商品图片</div>
+            <p class="goods-title">商品标题</p>
+        </div>
+        <div class="shopping-cart">购物车</div>
+        <div class="show-time" id="show">点我演示</div>
+    </div>
+    <div class="move"></div>
+    <script>
+        /**
+ * js抛物线动画
+ * @param  {[object]} origin [起点元素]
+ * @param  {[object]} target [目标点元素]
+ * @param  {[object]} element [要运动的元素]
+ * @param  {[number]} a [抛物线弧度]
+ * @param  {[number]} time [动画执行时间]
+ * @param  {[function]} callback [抛物线执行完成后回调]
+ */
+        class Parabola {
+            constructor(config) {
+                this.$ = (selector) => {
+                    return document.querySelector(selector)
+                }
+                this.b = 0
+                this.INTERVAL = 15
+                this.timer = null
+                this.config = config || {}
+                // 起点
+                this.origin = this.$(this.config.origin) || null
+                // 终点
+                this.target = this.$(this.config.target) || null
+                // 运动的元素
+                this.element = this.$(this.config.element) || null
+                // 曲线弧度
+                this.radian = this.config.radian || 0.004
+                // 运动时间(ms)
+                this.time = this.config.time || 1000
+
+                this.originX = this.origin.getBoundingClientRect().left
+                this.originY = this.origin.getBoundingClientRect().top
+                this.targetX = this.target.getBoundingClientRect().left
+                this.targetY = this.target.getBoundingClientRect().top
+
+                this.diffx = this.targetX - this.originX
+                this.diffy = this.targetY - this.originY
+                this.speedx = this.diffx / this.time
+
+                // 已知a, 根据抛物线函数 y = a*x*x + b*x + c 将抛物线起点平移到坐标原点[0, 0]，终点随之平移，那么抛物线经过原点[0, 0] 得出c = 0;
+                // 终点平移后得出：y2-y1 = a*(x2 - x1)*(x2 - x1) + b*(x2 - x1)
+                // 即 diffy = a*diffx*diffx + b*diffx;
+                // 可求出常数b的值
+                this.b =
+                    (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx
+
+                this.element.style.left = `${this.originX}px`
+                this.element.style.top = `${this.originY}px`
+            }
+
+            // 确定动画方式
+            moveStyle() {
+                let moveStyle = 'position',
+                    testDiv = document.createElement('input')
+                if ('placeholder' in testDiv) {
+                    ;['', 'ms', 'moz', 'webkit'].forEach(function (pre) {
+                        var transform = pre + (pre ? 'T' : 't') + 'ransform'
+                        if (transform in testDiv.style) {
+                            moveStyle = transform
+                        }
+                    })
+                }
+                return moveStyle
+            }
+
+            move() {
+                let start = new Date().getTime(),
+                    moveStyle = this.moveStyle(),
+                    _this = this
+
+                if (this.timer) return
+                this.element.style.left = `${this.originX}px`
+                this.element.style.top = `${this.originY}px`
+                this.element.style[moveStyle] = 'translate(0px,0px)'
+                this.timer = setInterval(function () {
+                    if (new Date().getTime() - start > _this.time) {
+                        _this.element.style.left = `${_this.targetX}px`
+                        _this.element.style.top = `${_this.targetY}px`
+                        typeof _this.config.callback === 'function' &&
+                            _this.config.callback()
+                        clearInterval(_this.timer)
+                        _this.timer = null
+                        return
+                    }
+                    let x = _this.speedx * (new Date().getTime() - start)
+                    let y = _this.radian * x * x + _this.b * x
+                    if (moveStyle === 'position') {
+                        _this.element.style.left = `${x + _this.originX}px`
+                        _this.element.style.top = `${y + _this.originY}px`
+                    } else {
+                        if (window.requestAnimationFrame) {
+                            window.requestAnimationFrame(() => {
+                                _this.element.style[moveStyle] =
+                                    'translate(' + x + 'px,' + y + 'px)'
+                            })
+                        } else {
+                            _this.element.style[moveStyle] =
+                                'translate(' + x + 'px,' + y + 'px)'
+                        }
+                    }
+                }, this.INTERVAL)
+                return this
+            }
+        }
+
+        let parabola = new Parabola({
+            origin: '.goods-title',
+            target: '.shopping-cart',
+            element: '.move',
+        })
+        console.log(parabola)
+// document.querySelector('#show').addEventListener(
+//     'click',
+//     () => {
+//         parabola.move()
+//     },
+//     false
+// )
+
+    </script>
+</body>
+
+</html>
