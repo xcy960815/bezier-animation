@@ -17,6 +17,7 @@ export class Bezier {
         moveClassName: '',
         radian: 0.004,
         time: 1000,
+        multiNode: false,
     }
 
     timer: number = null
@@ -41,6 +42,9 @@ export class Bezier {
     diffy: number = null
 
     speedx: number = null
+
+    // 是否跨节点使用
+    multiNode: boolean = false
 
     constructor(config: Config) {
         this.config = config || {
@@ -79,13 +83,15 @@ export class Bezier {
 
         this.speedx = this.diffx / this.time
 
+        this.multiNode = this.config.multiNode || false
         // 已知a, 根据抛物线函数 y = a*x*x + b*x + c 将抛物线起点平移到坐标原点[0, 0]，终点随之平移，那么抛物线经过原点[0, 0] 得出c = 0;
         // 终点平移后得出：y2-y1 = a*(x2 - x1)*(x2 - x1) + b*(x2 - x1)
         // 即 diffy = a*diffx*diffx + b*diffx;
         // 可求出常数b的值
         this.b =
             (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx
-
+        // 让需要移动的节点 在出发点的位置上
+        this.moveNode.style.position = 'absolute'
         this.moveNode.style.left = `${this.sourceNodeX}px`
         this.moveNode.style.top = `${this.sourceNodeY}px`
     }
@@ -93,57 +99,83 @@ export class Bezier {
     getComponentFunction(selector: string): HTMLElement {
         return document.querySelector(selector)
     }
-    // 确定动画方式
-    moveStyle(): string {
-        let moveStyle = 'position'
-        const testDiv = document.createElement('input')
+    // 确定动画方式(兼容各个浏览器的运动方法)
+    handleMarkSureDomMoveStyle(): string {
+        let domMoveStyle = 'position'
+        const inputNode: HTMLInputElement = document.createElement('input')
         const placeholder = 'placeholder'
-        if (placeholder in testDiv) {
+        if (placeholder in inputNode) {
             const browserTypeList: Array<string> = ['', 'ms', 'moz', 'webkit']
             browserTypeList.forEach((pre) => {
                 const transform: string = pre + (pre ? 'T' : 't') + 'ransform'
-                if (transform in testDiv.style) {
-                    moveStyle = transform
+                if (transform in inputNode.style) {
+                    domMoveStyle = transform
                 }
             })
         }
-        return moveStyle
+        return domMoveStyle
     }
 
-    move(): this {
-        const start: number = new Date().getTime()
-        const moveStyle = this.moveStyle()
-        if (this.timer) return
+    move(): void {
+        if (this.timer) return //必须等每一个动画结束之后才能进行新的动画
+        const startTime: number = new Date().getTime()
+        const domMoveStyle = this.handleMarkSureDomMoveStyle()
+        // 记录运动节点的初始位置
         this.moveNode.style.left = `${this.sourceNodeX}px`
         this.moveNode.style.top = `${this.sourceNodeY}px`
-        this.moveNode.style[moveStyle] = 'translate(0px,0px)'
+        this.moveNode.style[domMoveStyle] = 'translate(0px,0px)'
+        let maskLayerNode: HTMLDivElement
+        // 创建全局遮罩层，这是在开启跨节点使用的时候
+        if (this.multiNode) {
+            maskLayerNode = document.createElement('div')
+            maskLayerNode.style.position = 'absolute'
+            maskLayerNode.style.zIndex = '99'
+            maskLayerNode.style.top = '0px'
+            maskLayerNode.style.bottom = '0px'
+            maskLayerNode.style.right = '0px'
+            maskLayerNode.style.left = '0px'
+            maskLayerNode.appendChild(this.moveNode)
+            document.body.appendChild(maskLayerNode)
+        }
+
         this.timer = window.setInterval(() => {
-            if (new Date().getTime() - start > this.time) {
-                this.moveNode.style.left = `${this.targetNodeX}px`
-                this.moveNode.style.top = `${this.targetNodeY}px`
-                typeof this.config.callback === 'function' &&
-                    this.config.callback()
+            const endTime: number = new Date().getTime()
+            // 判断动画是否完成 判断依据就是 当前时间减去 开始时间 是否大于运动所需总时长
+            if (endTime - startTime > this.time) {
                 window.clearInterval(this.timer)
                 this.timer = null
+                this.moveNode.style.left = `${this.targetNodeX}px`
+                this.moveNode.style.top = `${this.targetNodeY}px`
+                console.log('this.multiNode', this.multiNode)
+                if (this.multiNode) {
+                    maskLayerNode.removeChild(this.moveNode)
+                    document.body.removeChild(maskLayerNode)
+                }
+                // 所有的事情全部操作完成了 再调用callback
+                typeof this.config.callback === 'function' &&
+                    this.config.callback()
                 return
             }
-            const x: number = this.speedx * (new Date().getTime() - start)
+
+            const x: number = this.speedx * (endTime - startTime)
             const y: number = this.radian * x * x + this.b * x
-            if (moveStyle === 'position') {
+            if (domMoveStyle === 'position') {
                 this.moveNode.style.left = `${x + this.sourceNodeX}px`
                 this.moveNode.style.top = `${y + this.sourceNodeY}px`
             } else {
                 if (window.requestAnimationFrame) {
                     window.requestAnimationFrame(() => {
-                        this.moveNode.style[moveStyle] =
-                            'translate(' + x + 'px,' + y + 'px)'
+                        this.moveNode.style[
+                            domMoveStyle
+                        ] = `translate(${x}px,${y}px)`
                     })
                 } else {
-                    this.moveNode.style[moveStyle] =
-                        'translate(' + x + 'px,' + y + 'px)'
+                    this.moveNode.style[
+                        domMoveStyle
+                    ] = `translate(${x}px,${y}px)`
                 }
             }
         }, 15)
-        return this
+        // return this
     }
 }

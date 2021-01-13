@@ -13,6 +13,7 @@ var Bezier = /** @class */ (function () {
             moveClassName: '',
             radian: 0.004,
             time: 1000,
+            multiNode: false,
         };
         this.timer = null;
         this.b = 0;
@@ -28,6 +29,8 @@ var Bezier = /** @class */ (function () {
         this.diffx = null;
         this.diffy = null;
         this.speedx = null;
+        // 是否跨节点使用
+        this.multiNode = false;
         this.config = config || {
             sourceClassName: '',
             targetClassName: '',
@@ -55,12 +58,15 @@ var Bezier = /** @class */ (function () {
         this.diffx = this.targetNodeX - this.sourceNodeX;
         this.diffy = this.targetNodeY - this.sourceNodeY;
         this.speedx = this.diffx / this.time;
+        this.multiNode = this.config.multiNode || false;
         // 已知a, 根据抛物线函数 y = a*x*x + b*x + c 将抛物线起点平移到坐标原点[0, 0]，终点随之平移，那么抛物线经过原点[0, 0] 得出c = 0;
         // 终点平移后得出：y2-y1 = a*(x2 - x1)*(x2 - x1) + b*(x2 - x1)
         // 即 diffy = a*diffx*diffx + b*diffx;
         // 可求出常数b的值
         this.b =
             (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx;
+        // 让需要移动的节点 在出发点的位置上
+        this.moveNode.style.position = 'absolute';
         this.moveNode.style.left = this.sourceNodeX + "px";
         this.moveNode.style.top = this.sourceNodeY + "px";
     }
@@ -68,61 +74,81 @@ var Bezier = /** @class */ (function () {
     Bezier.prototype.getComponentFunction = function (selector) {
         return document.querySelector(selector);
     };
-    // 确定动画方式
-    Bezier.prototype.moveStyle = function () {
-        var moveStyle = 'position';
-        var testDiv = document.createElement('input');
+    // 确定动画方式(兼容各个浏览器的运动方法)
+    Bezier.prototype.handleMarkSureDomMoveStyle = function () {
+        var domMoveStyle = 'position';
+        var inputNode = document.createElement('input');
         var placeholder = 'placeholder';
-        if (placeholder in testDiv) {
+        if (placeholder in inputNode) {
             var browserTypeList = ['', 'ms', 'moz', 'webkit'];
             browserTypeList.forEach(function (pre) {
                 var transform = pre + (pre ? 'T' : 't') + 'ransform';
-                if (transform in testDiv.style) {
-                    moveStyle = transform;
+                if (transform in inputNode.style) {
+                    domMoveStyle = transform;
                 }
             });
         }
-        return moveStyle;
+        return domMoveStyle;
     };
     Bezier.prototype.move = function () {
         var _this = this;
-        var start = new Date().getTime();
-        var moveStyle = this.moveStyle();
         if (this.timer)
-            return;
+            return; //必须等每一个动画结束之后才能进行新的动画
+        var startTime = new Date().getTime();
+        var domMoveStyle = this.handleMarkSureDomMoveStyle();
+        // 记录运动节点的初始位置
         this.moveNode.style.left = this.sourceNodeX + "px";
         this.moveNode.style.top = this.sourceNodeY + "px";
-        this.moveNode.style[moveStyle] = 'translate(0px,0px)';
+        this.moveNode.style[domMoveStyle] = 'translate(0px,0px)';
+        var maskLayerNode;
+        // 创建全局遮罩层，这是在开启跨节点使用的时候
+        if (this.multiNode) {
+            maskLayerNode = document.createElement('div');
+            maskLayerNode.style.position = 'absolute';
+            maskLayerNode.style.zIndex = '99';
+            maskLayerNode.style.top = '0px';
+            maskLayerNode.style.bottom = '0px';
+            maskLayerNode.style.right = '0px';
+            maskLayerNode.style.left = '0px';
+            maskLayerNode.appendChild(this.moveNode);
+            document.body.appendChild(maskLayerNode);
+        }
         this.timer = window.setInterval(function () {
-            if (new Date().getTime() - start > _this.time) {
-                _this.moveNode.style.left = _this.targetNodeX + "px";
-                _this.moveNode.style.top = _this.targetNodeY + "px";
-                typeof _this.config.callback === 'function' &&
-                    _this.config.callback();
+            var endTime = new Date().getTime();
+            // 判断动画是否完成 判断依据就是 当前时间减去 开始时间 是否大于运动所需总时长
+            if (endTime - startTime > _this.time) {
                 window.clearInterval(_this.timer);
                 _this.timer = null;
+                _this.moveNode.style.left = _this.targetNodeX + "px";
+                _this.moveNode.style.top = _this.targetNodeY + "px";
+                console.log('this.multiNode', _this.multiNode);
+                if (_this.multiNode) {
+                    maskLayerNode.removeChild(_this.moveNode);
+                    document.body.removeChild(maskLayerNode);
+                }
+                // 所有的事情全部操作完成了 再调用callback
+                typeof _this.config.callback === 'function' &&
+                    _this.config.callback();
                 return;
             }
-            var x = _this.speedx * (new Date().getTime() - start);
+            var x = _this.speedx * (endTime - startTime);
             var y = _this.radian * x * x + _this.b * x;
-            if (moveStyle === 'position') {
+            if (domMoveStyle === 'position') {
                 _this.moveNode.style.left = x + _this.sourceNodeX + "px";
                 _this.moveNode.style.top = y + _this.sourceNodeY + "px";
             }
             else {
                 if (window.requestAnimationFrame) {
                     window.requestAnimationFrame(function () {
-                        _this.moveNode.style[moveStyle] =
-                            'translate(' + x + 'px,' + y + 'px)';
+                        _this.moveNode.style[domMoveStyle] = "translate(" + x + "px," + y + "px)";
                     });
                 }
                 else {
-                    _this.moveNode.style[moveStyle] =
-                        'translate(' + x + 'px,' + y + 'px)';
+                    _this.moveNode.style[domMoveStyle] = "translate(" + x + "px," + y + "px)";
                 }
             }
         }, 15);
-        return this;
+        // return this
     };
     return Bezier;
 }());
