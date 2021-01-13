@@ -1,5 +1,5 @@
 {
-    "name": "bezier-animation",
+    "name": "bezier-animation-plus",
     "version": "1.0.0",
     "description": "一个基于js实现贝塞尔曲线的动画库",
     "main": "dist/index.umd.js",
