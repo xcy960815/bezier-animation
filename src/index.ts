@@ -9,7 +9,7 @@
  */
 import { Config } from '../types/bezier'
 
-export class Bezier {
+export default class Bezier {
     // 传进来的配置
     config: Config = {
         sourceClassName: '',
@@ -17,7 +17,6 @@ export class Bezier {
         moveClassName: '',
         radian: 0.004,
         time: 1000,
-        multiNode: false,
     }
 
     timer: number = null

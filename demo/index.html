@@ -93,9 +93,12 @@
             <span onClick="handleClickShop('shop-detail-7')">加入购物车</span>
         </li>
     </ul>
-    <script src="./index.umd.js"></script>
-    <script lang="typescript">
+    <!-- <script src="./index.umd.js"></script> -->
+    <!-- cdn  -->
+    <script type="text/javascript" src="https://unpkg.com/bezier-animation-plus@latest/dist/index.umd.js" "=""></script>
 
+    <script lang=" typescript">
+        console.log(bezierAnimation)
         function handleClickShop(className) {
             const sourceClassName = "." + className
             const sourceNode = document.querySelector(sourceClassName)

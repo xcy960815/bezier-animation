@@ -21,14 +21,14 @@ export default {
             file: 'demo/index.umd.js',
             name: 'bezierAnimation',
         },
-        {
-            format: 'cjs',
-            file: 'dist/index.cjs.js',
-        },
-        {
-            format: 'es',
-            file: 'dist/index.esm.js',
-        },
+        // {
+        //     format: 'cjs',
+        //     file: 'dist/index.cjs.js',
+        // },
+        // {
+        //     format: 'es',
+        //     file: 'dist/index.esm.js',
+        // },
     ],
     plugins: [
         del({ targets: ['dist', 'demo/index.umd.js'] }),
