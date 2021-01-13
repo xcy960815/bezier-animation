@@ -4,7 +4,7 @@ export interface Config {
     moveClassName: string
     radian?: number
     time?: number
-    multiNode?: boolean
+    // multiNode?: boolean
     callback?: () => void
 }
 

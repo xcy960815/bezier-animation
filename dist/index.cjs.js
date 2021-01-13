@@ -5,6 +5,8 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var Bezier = /** @class */ (function () {
+    // 是否跨节点使用
+    // multiNode: boolean = false
     function Bezier(config) {
         // 传进来的配置
         this.config = {
@@ -29,8 +31,6 @@ var Bezier = /** @class */ (function () {
         this.diffx = null;
         this.diffy = null;
         this.speedx = null;
-        // 是否跨节点使用
-        this.multiNode = false;
         this.config = config || {
             sourceClassName: '',
             targetClassName: '',
@@ -58,7 +58,7 @@ var Bezier = /** @class */ (function () {
         this.diffx = this.targetNodeX - this.sourceNodeX;
         this.diffy = this.targetNodeY - this.sourceNodeY;
         this.speedx = this.diffx / this.time;
-        this.multiNode = this.config.multiNode || false;
+        // this.multiNode = this.config.multiNode || false
         // 已知a, 根据抛物线函数 y = a*x*x + b*x + c 将抛物线起点平移到坐标原点[0, 0]，终点随之平移，那么抛物线经过原点[0, 0] 得出c = 0;
         // 终点平移后得出：y2-y1 = a*(x2 - x1)*(x2 - x1) + b*(x2 - x1)
         // 即 diffy = a*diffx*diffx + b*diffx;
@@ -102,33 +102,27 @@ var Bezier = /** @class */ (function () {
         this.moveNode.style[domMoveStyle] = 'translate(0px,0px)';
         var maskLayerNode;
         // 创建全局遮罩层，这是在开启跨节点使用的时候
-        if (this.multiNode) {
-            maskLayerNode = document.createElement('div');
-            maskLayerNode.style.position = 'absolute';
-            maskLayerNode.style.zIndex = '99';
-            maskLayerNode.style.top = '0px';
-            maskLayerNode.style.bottom = '0px';
-            maskLayerNode.style.right = '0px';
-            maskLayerNode.style.left = '0px';
-            maskLayerNode.appendChild(this.moveNode);
-            document.body.appendChild(maskLayerNode);
-        }
+        maskLayerNode = document.createElement('div');
+        maskLayerNode.style.position = 'absolute';
+        maskLayerNode.style.zIndex = '99';
+        maskLayerNode.style.top = '0px';
+        maskLayerNode.style.bottom = '0px';
+        maskLayerNode.style.right = '0px';
+        maskLayerNode.style.left = '0px';
+        maskLayerNode.appendChild(this.moveNode);
+        document.body.appendChild(maskLayerNode);
         this.timer = window.setInterval(function () {
             var endTime = new Date().getTime();
             // 判断动画是否完成 判断依据就是 当前时间减去 开始时间 是否大于运动所需总时长
             if (endTime - startTime > _this.time) {
+                typeof _this.config.callback === 'function' &&
+                    _this.config.callback();
                 window.clearInterval(_this.timer);
                 _this.timer = null;
                 _this.moveNode.style.left = _this.targetNodeX + "px";
                 _this.moveNode.style.top = _this.targetNodeY + "px";
-                console.log('this.multiNode', _this.multiNode);
-                if (_this.multiNode) {
-                    maskLayerNode.removeChild(_this.moveNode);
-                    document.body.removeChild(maskLayerNode);
-                }
-                // 所有的事情全部操作完成了 再调用callback
-                typeof _this.config.callback === 'function' &&
-                    _this.config.callback();
+                maskLayerNode.removeChild(_this.moveNode);
+                document.body.removeChild(maskLayerNode);
                 return;
             }
             var x = _this.speedx * (endTime - startTime);

@@ -95,12 +95,14 @@
     </ul>
     <script src="./index.umd.js"></script>
     <script lang="typescript">
-        // 同节点使用
+
         function handleClickShop(className) {
             const sourceClassName = "." + className
             const sourceNode = document.querySelector(sourceClassName)
             const sourceNodeStyle = sourceNode.getBoundingClientRect()
             const copyNode = sourceNode.cloneNode(true)
+            copyNode.style.width = 'auto'
+            copyNode.style.height = `${sourceNodeStyle.height}px`
             copyNode.className = 'copy-node'
             const targetClassName = "." + "shop-car"
             document.body.appendChild(copyNode)
@@ -108,44 +110,16 @@
             const bezier = new bezierAnimation.Bezier({
                 radian: -0.0009,
                 time: 2000,
-                multiNode: false,
+                multiNode: true,
                 sourceClassName,
                 targetClassName,
                 moveClassName,
                 callback: () => {
-                    // maskLayerNode.removeChild(copyNode)
-                    document.body.removeChild(copyNode)
+                    console.log("动画执行完成")
                 }
             })
             bezier.move()
         }
-
-
-        // 跨节点使用
-        // function handleClickShop(className) {
-        //     const sourceClassName = "." + className
-        //     const sourceNode = document.querySelector(sourceClassName)
-        //     const sourceNodeStyle = sourceNode.getBoundingClientRect()
-        //     const copyNode = sourceNode.cloneNode(true)
-        //     copyNode.style.width = 'auto'
-        //     copyNode.style.height = `${sourceNodeStyle.height}px`
-        //     copyNode.className = 'copy-node'
-        //     const targetClassName = "." + "shop-car"
-        //     document.body.appendChild(copyNode)
-        //     const moveClassName = ".copy-node"
-        //     const bezier = new bezierAnimation.Bezier({
-        //         radian: -0.0009,
-        //         time: 2000,
-        //         multiNode: true,
-        //         sourceClassName,
-        //         targetClassName,
-        //         moveClassName,
-        //         callback: () => {
-        //             console.log("动画执行完成")
-        //         }
-        //     })
-        //     bezier.move()
-        // }
 
     </script>
 
