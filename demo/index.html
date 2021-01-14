@@ -95,14 +95,14 @@
     </ul>
     <!-- <script src="./index.umd.js"></script> -->
     <!-- cdn  -->
-    <script type="text/javascript" src="https://unpkg.com/bezier-animation-plus@latest/dist/index.umd.js" "=""></script>
+    <script type="text/javascript" src="https://unpkg.com/bezier-animation-plus@latest/dist/index.umd.js"></script>
 
-    <script lang=" typescript">
-        console.log(bezierAnimation)
+    <script lang="typescript">
         function handleClickShop(className) {
             const sourceClassName = "." + className
             const sourceNode = document.querySelector(sourceClassName)
             const sourceNodeStyle = sourceNode.getBoundingClientRect()
+            // 直接复制了源节点
             const copyNode = sourceNode.cloneNode(true)
             copyNode.style.width = 'auto'
             copyNode.style.height = `${sourceNodeStyle.height}px`
@@ -110,7 +110,7 @@
             const targetClassName = "." + "shop-car"
             document.body.appendChild(copyNode)
             const moveClassName = ".copy-node"
-            const bezier = new bezierAnimation.Bezier({
+            const bezier = new bezierAnimation({
                 radian: -0.0009,
                 time: 2000,
                 multiNode: true,

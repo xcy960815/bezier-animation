@@ -7,32 +7,32 @@ export interface Config {
     callback?: () => void
 }
 
-export declare class BezierInterface {
+export declare class Bezier {
     // 传进来的配置
-    config: Config
+    private config: Config
 
-    timer: number
+    private timer: number
 
-    b: number
+    private b: number
 
-    radian: number
+    private radian: number
 
-    time: number
+    private time: number
 
-    sourceNode: HTMLElement
-    sourceNodeX: number
-    sourceNodeY: number
+    private sourceNode: HTMLElement
+    private sourceNodeX: number
+    private sourceNodeY: number
 
-    targetNode: HTMLElement
-    targetNodeX: number
-    targetNodeY: number
+    private targetNode: HTMLElement
+    private targetNodeX: number
+    private targetNodeY: number
 
-    moveNode: HTMLElement
+    private moveNode: HTMLElement
 
-    diffx: number
-    diffy: number
+    private diffx: number
+    private diffy: number
 
-    speedx: number
+    private speedx: number
 
     constructor(config: Config)
     // 获取 目标节点、源节点、移动节点
@@ -40,5 +40,5 @@ export declare class BezierInterface {
     // 确定动画方式
     static moveStyle(): string
 
-    move(): this
+    move(): void
 }

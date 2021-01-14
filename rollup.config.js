@@ -1,7 +1,6 @@
 import typescript from 'rollup-plugin-typescript'
 import sourceMaps from 'rollup-plugin-sourcemaps'
 import { terser } from 'rollup-plugin-terser'
-import { nodeResolve } from '@rollup/plugin-node-resolve' //将外部引入的js打包进来
 import babel from 'rollup-plugin-babel'
 import del from 'rollup-plugin-delete' //
 import commonjs from '@rollup/plugin-commonjs' //将CommonJS模块转换为ES6, 方便rollup直接调用
@@ -32,7 +31,6 @@ export default {
     ],
     plugins: [
         del({ targets: ['dist', 'demo/index.umd.js'] }),
-        nodeResolve(),
         commonjs({
             include: 'node_modules/**',
         }),

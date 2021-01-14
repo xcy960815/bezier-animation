@@ -1,1 +1,1 @@
-export { BezierInterface } from './bezier'
+export { Bezier } from './bezier'

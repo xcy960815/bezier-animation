@@ -82,15 +82,13 @@ export default class Bezier {
 
         this.speedx = this.diffx / this.time
 
-        // this.multiNode = this.config.multiNode || false
-
         // 已知a, 根据抛物线函数 y = a*x*x + b*x + c 将抛物线起点平移到坐标原点[0, 0]，终点随之平移，那么抛物线经过原点[0, 0] 得出c = 0;
         // 终点平移后得出：y2-y1 = a*(x2 - x1)*(x2 - x1) + b*(x2 - x1)
         // 即 diffy = a*diffx*diffx + b*diffx;
         // 可求出常数b的值
         this.b =
             (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx
-        // 让需要移动的节点 在出发点的位置上
+        // 让需要移动的节点 初始化在出发点的位置上
         this.moveNode.style.position = 'absolute'
         this.moveNode.style.left = `${this.sourceNodeX}px`
         this.moveNode.style.top = `${this.sourceNodeY}px`
@@ -172,6 +170,5 @@ export default class Bezier {
                 }
             }
         }, 15)
-        // return this
     }
 }
