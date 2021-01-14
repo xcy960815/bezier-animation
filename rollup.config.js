@@ -7,8 +7,8 @@ import commonjs from '@rollup/plugin-commonjs' //将CommonJS模块转换为ES6, 
 import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
 const isProduction = process.env.NODE_ENV === 'production'
-import path from 'path'
-const getPath = (_path) => path.resolve(__dirname, _path)
+// import path from 'path'
+// const getPath = (_path) => path.resolve(__dirname, _path)
 
 export default {
     input: './src/index.ts',
@@ -49,7 +49,7 @@ export default {
         !isProduction && livereload(),
 
         typescript({
-            tsconfig: getPath('./tsconfig.json'), // 导入本地ts配置
+            // tsconfig: getPath('./tsconfig.json'), // 导入本地ts配置
             extensions: ['.js', '.ts', '.tsx'],
         }),
         sourceMaps(),

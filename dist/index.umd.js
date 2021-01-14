@@ -6,8 +6,8 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.bezierAnimation = factory());
 }(this, (function () { 'use strict';
 
-    class Bezier {
-        constructor(config) {
+    var Bezier = /** @class */ (function () {
+        function Bezier(config) {
             // 传进来的配置
             this.config = {
                 sourceClassName: '',
@@ -65,40 +65,41 @@
                 (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx;
             // 让需要移动的节点 初始化在出发点的位置上
             this.moveNode.style.position = 'absolute';
-            this.moveNode.style.left = `${this.sourceNodeX}px`;
-            this.moveNode.style.top = `${this.sourceNodeY}px`;
+            this.moveNode.style.left = this.sourceNodeX + "px";
+            this.moveNode.style.top = this.sourceNodeY + "px";
         }
         // 获取 目标节点、源节点、移动节点
-        getComponentFunction(selector) {
+        Bezier.prototype.getComponentFunction = function (selector) {
             return document.querySelector(selector);
-        }
+        };
         // 确定动画方式(兼容各个浏览器的运动方法)
-        handleMarkSureDomMoveStyle() {
-            let domMoveStyle = 'position';
-            const inputNode = document.createElement('input');
-            const placeholder = 'placeholder';
+        Bezier.prototype.handleMarkSureDomMoveStyle = function () {
+            var domMoveStyle = 'position';
+            var inputNode = document.createElement('input');
+            var placeholder = 'placeholder';
             if (placeholder in inputNode) {
-                const browserTypeList = ['', 'ms', 'moz', 'webkit'];
-                browserTypeList.forEach((pre) => {
-                    const transform = pre + (pre ? 'T' : 't') + 'ransform';
+                var browserTypeList = ['', 'ms', 'moz', 'webkit'];
+                browserTypeList.forEach(function (pre) {
+                    var transform = pre + (pre ? 'T' : 't') + 'ransform';
                     if (transform in inputNode.style) {
                         domMoveStyle = transform;
                     }
                 });
             }
             return domMoveStyle;
-        }
-        move() {
+        };
+        Bezier.prototype.move = function () {
+            var _this = this;
             if (this.timer)
                 return; //必须等每一个动画结束之后才能进行新的动画
-            const startTime = new Date().getTime();
-            const domMoveStyle = this.handleMarkSureDomMoveStyle();
+            var startTime = new Date().getTime();
+            var domMoveStyle = this.handleMarkSureDomMoveStyle();
             // 记录运动节点的初始位置
-            this.moveNode.style.left = `${this.sourceNodeX}px`;
-            this.moveNode.style.top = `${this.sourceNodeY}px`;
-            const moveNodeStyle = this.moveNode.style;
+            this.moveNode.style.left = this.sourceNodeX + "px";
+            this.moveNode.style.top = this.sourceNodeY + "px";
+            var moveNodeStyle = this.moveNode.style;
             moveNodeStyle[domMoveStyle] = 'translate(0px,0px)';
-            let maskLayerNode;
+            var maskLayerNode;
             // 创建全局遮罩层，这是在开启跨节点使用的时候
             maskLayerNode = document.createElement('div');
             maskLayerNode.style.position = 'absolute';
@@ -109,42 +110,43 @@
             maskLayerNode.style.left = '0px';
             maskLayerNode.appendChild(this.moveNode);
             document.body.appendChild(maskLayerNode);
-            this.timer = window.setInterval(() => {
-                const endTime = new Date().getTime();
+            this.timer = window.setInterval(function () {
+                var endTime = new Date().getTime();
                 // 判断动画是否完成 判断依据就是 当前时间减去 开始时间 是否大于运动所需总时长
-                if (endTime - startTime > this.time) {
-                    typeof this.config.callback === 'function' &&
-                        this.config.callback();
-                    window.clearInterval(this.timer);
-                    this.timer = 0;
-                    this.moveNode.style.left = `${this.targetNodeX}px`;
-                    this.moveNode.style.top = `${this.targetNodeY}px`;
-                    maskLayerNode.removeChild(this.moveNode);
+                if (endTime - startTime > _this.time) {
+                    typeof _this.config.callback === 'function' &&
+                        _this.config.callback();
+                    window.clearInterval(_this.timer);
+                    _this.timer = 0;
+                    _this.moveNode.style.left = _this.targetNodeX + "px";
+                    _this.moveNode.style.top = _this.targetNodeY + "px";
+                    maskLayerNode.removeChild(_this.moveNode);
                     document.body.removeChild(maskLayerNode);
                     return;
                 }
-                const x = this.speedx * (endTime - startTime);
-                const y = this.radian * x * x + this.b * x;
+                var x = _this.speedx * (endTime - startTime);
+                var y = _this.radian * x * x + _this.b * x;
                 if (domMoveStyle === 'position') {
-                    this.moveNode.style.left = `${x + this.sourceNodeX}px`;
-                    this.moveNode.style.top = `${y + this.sourceNodeY}px`;
+                    _this.moveNode.style.left = x + _this.sourceNodeX + "px";
+                    _this.moveNode.style.top = y + _this.sourceNodeY + "px";
                 }
                 else {
-                    const moveNodeStyle = this.moveNode.style;
+                    var moveNodeStyle_1 = _this.moveNode.style;
                     if (window.requestAnimationFrame) {
-                        window.requestAnimationFrame(() => {
-                            moveNodeStyle[domMoveStyle] = `translate(${x}px,${y}px)`;
+                        window.requestAnimationFrame(function () {
+                            moveNodeStyle_1[domMoveStyle] = "translate(" + x + "px," + y + "px)";
                         });
                     }
                     else {
-                        moveNodeStyle[domMoveStyle] = `translate(${x}px,${y}px)`;
+                        moveNodeStyle_1[domMoveStyle] = "translate(" + x + "px," + y + "px)";
                     }
                 }
             }, 15);
-        }
-    }
+        };
+        return Bezier;
+    }());
     var index = {
-        Bezier,
+        Bezier: Bezier,
     };
 
     return index;
