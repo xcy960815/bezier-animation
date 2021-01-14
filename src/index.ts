@@ -19,7 +19,7 @@ export default class Bezier {
         time: 1000,
     }
 
-    timer: number = null
+    timer: number = 0
 
     b: number = 0
 
@@ -27,23 +27,20 @@ export default class Bezier {
 
     time: number = 0
 
-    sourceNode: HTMLElement = null
-    sourceNodeX: number = null
-    sourceNodeY: number = null
+    sourceNode: HTMLElement
+    sourceNodeX: number = 0
+    sourceNodeY: number = 0
 
-    targetNode: HTMLElement = null
-    targetNodeX: number = null
-    targetNodeY: number = null
+    targetNode: HTMLElement
+    targetNodeX: number = 0
+    targetNodeY: number = 0
 
-    moveNode: HTMLElement = null
+    moveNode: HTMLElement
 
-    diffx: number = null
-    diffy: number = null
+    diffx: number = 0
+    diffy: number = 0
 
-    speedx: number = null
-
-    // 是否跨节点使用
-    // multiNode: boolean = false
+    speedx: number = 0
 
     constructor(config: Config) {
         this.config = config || {
@@ -54,14 +51,17 @@ export default class Bezier {
             time: 1000,
         }
         // 起点
+        // @ts-ignore
         this.sourceNode =
             this.getComponentFunction(this.config.sourceClassName) || null
 
         // 终点
+        // @ts-ignore
         this.targetNode =
             this.getComponentFunction(this.config.targetClassName) || null
 
         // 运动的元素
+        // @ts-ignore
         this.moveNode =
             this.getComponentFunction(this.config.moveClassName) || null
 
@@ -94,7 +94,7 @@ export default class Bezier {
         this.moveNode.style.top = `${this.sourceNodeY}px`
     }
     // 获取 目标节点、源节点、移动节点
-    getComponentFunction(selector: string): HTMLElement {
+    getComponentFunction(selector: string): HTMLElement | null {
         return document.querySelector(selector)
     }
     // 确定动画方式(兼容各个浏览器的运动方法)
@@ -117,11 +117,18 @@ export default class Bezier {
     move(): void {
         if (this.timer) return //必须等每一个动画结束之后才能进行新的动画
         const startTime: number = new Date().getTime()
-        const domMoveStyle = this.handleMarkSureDomMoveStyle()
+        const domMoveStyle: string = this.handleMarkSureDomMoveStyle()
+        console.log(
+            'domMoveStyle',
+            domMoveStyle,
+            'this.moveNode.style',
+            this.moveNode.style
+        )
         // 记录运动节点的初始位置
         this.moveNode.style.left = `${this.sourceNodeX}px`
         this.moveNode.style.top = `${this.sourceNodeY}px`
-        this.moveNode.style[domMoveStyle] = 'translate(0px,0px)'
+        const moveNodeStyle: any = this.moveNode.style
+        moveNodeStyle[domMoveStyle] = 'translate(0px,0px)'
         let maskLayerNode: HTMLDivElement
         // 创建全局遮罩层，这是在开启跨节点使用的时候
         maskLayerNode = document.createElement('div')
@@ -141,13 +148,12 @@ export default class Bezier {
                 typeof this.config.callback === 'function' &&
                     this.config.callback()
                 window.clearInterval(this.timer)
-                this.timer = null
+                this.timer = 0
                 this.moveNode.style.left = `${this.targetNodeX}px`
                 this.moveNode.style.top = `${this.targetNodeY}px`
 
                 maskLayerNode.removeChild(this.moveNode)
                 document.body.removeChild(maskLayerNode)
-
                 return
             }
 
@@ -157,16 +163,13 @@ export default class Bezier {
                 this.moveNode.style.left = `${x + this.sourceNodeX}px`
                 this.moveNode.style.top = `${y + this.sourceNodeY}px`
             } else {
+                const moveNodeStyle: any = this.moveNode.style
                 if (window.requestAnimationFrame) {
                     window.requestAnimationFrame(() => {
-                        this.moveNode.style[
-                            domMoveStyle
-                        ] = `translate(${x}px,${y}px)`
+                        moveNodeStyle[domMoveStyle] = `translate(${x}px,${y}px)`
                     })
                 } else {
-                    this.moveNode.style[
-                        domMoveStyle
-                    ] = `translate(${x}px,${y}px)`
+                    moveNodeStyle[domMoveStyle] = `translate(${x}px,${y}px)`
                 }
             }
         }, 15)

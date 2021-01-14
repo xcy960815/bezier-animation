@@ -19,15 +19,15 @@ export declare class Bezier {
 
     private time: number
 
-    private sourceNode: HTMLElement
+    private sourceNode!: HTMLElement
     private sourceNodeX: number
     private sourceNodeY: number
 
-    private targetNode: HTMLElement
+    private targetNode!: HTMLElement
     private targetNodeX: number
     private targetNodeY: number
 
-    private moveNode: HTMLElement
+    private moveNode!: HTMLElement
 
     private diffx: number
     private diffy: number
@@ -36,7 +36,7 @@ export declare class Bezier {
 
     constructor(config: Config)
     // 获取 目标节点、源节点、移动节点
-    static getComponentFunction(selector: string): HTMLElement
+    private static getComponentFunction(selector: string): HTMLElement | null
     // 确定动画方式
     static moveStyle(): string
 
