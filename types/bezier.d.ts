@@ -34,7 +34,7 @@ export declare class Bezier {
 
     private speedx: number
 
-    constructor(config: Config)
+    constructor(config: Config): void
     // 获取 目标节点、源节点、移动节点
     private static getComponentFunction(selector: string): HTMLElement | null
     // 确定动画方式

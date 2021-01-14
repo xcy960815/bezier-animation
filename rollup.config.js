@@ -1,4 +1,4 @@
-import typescript from 'rollup-plugin-typescript'
+import typescript from 'rollup-plugin-typescript2'
 import sourceMaps from 'rollup-plugin-sourcemaps'
 import { terser } from 'rollup-plugin-terser'
 import babel from 'rollup-plugin-babel'
@@ -7,6 +7,9 @@ import commonjs from '@rollup/plugin-commonjs' //将CommonJS模块转换为ES6, 
 import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
 const isProduction = process.env.NODE_ENV === 'production'
+import path from 'path'
+const getPath = (_path) => path.resolve(__dirname, _path)
+
 export default {
     input: './src/index.ts',
     output: [
@@ -20,14 +23,6 @@ export default {
             file: 'demo/index.umd.js',
             name: 'bezierAnimation',
         },
-        // {
-        //     format: 'cjs',
-        //     file: 'dist/index.cjs.js',
-        // },
-        // {
-        //     format: 'es',
-        //     file: 'dist/index.esm.js',
-        // },
     ],
     plugins: [
         del({ targets: ['dist', 'demo/index.umd.js'] }),
@@ -52,9 +47,10 @@ export default {
             }),
         // 热更新
         !isProduction && livereload(),
+
         typescript({
-            exclude: 'node_modules/**',
-            typescript: require('typescript'),
+            tsconfig: getPath('./tsconfig.json'), // 导入本地ts配置
+            extensions: ['.js', '.ts', '.tsx'],
         }),
         sourceMaps(),
     ],

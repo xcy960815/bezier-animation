@@ -9,7 +9,7 @@
  */
 import { Config } from '../types/bezier'
 
-export default class Bezier {
+class Bezier {
     // 传进来的配置
     config: Config = {
         sourceClassName: '',
@@ -118,12 +118,6 @@ export default class Bezier {
         if (this.timer) return //必须等每一个动画结束之后才能进行新的动画
         const startTime: number = new Date().getTime()
         const domMoveStyle: string = this.handleMarkSureDomMoveStyle()
-        console.log(
-            'domMoveStyle',
-            domMoveStyle,
-            'this.moveNode.style',
-            this.moveNode.style
-        )
         // 记录运动节点的初始位置
         this.moveNode.style.left = `${this.sourceNodeX}px`
         this.moveNode.style.top = `${this.sourceNodeY}px`
@@ -174,4 +168,8 @@ export default class Bezier {
             }
         }, 15)
     }
+}
+
+export default {
+    Bezier,
 }
