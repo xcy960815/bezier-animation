@@ -35,17 +35,11 @@
                 time: 1000,
             };
             // 起点
-            // @ts-ignore
-            this.sourceNode =
-                this.getComponentFunction(this.config.sourceClassName) || null;
+            this.sourceNode = this.getComponentFunction(this.config.sourceClassName);
             // 终点
-            // @ts-ignore
-            this.targetNode =
-                this.getComponentFunction(this.config.targetClassName) || null;
+            this.targetNode = this.getComponentFunction(this.config.targetClassName);
             // 运动的元素
-            // @ts-ignore
-            this.moveNode =
-                this.getComponentFunction(this.config.moveClassName) || null;
+            this.moveNode = this.getComponentFunction(this.config.moveClassName);
             // 曲线弧度
             this.radian = this.config.radian || 0.004;
             // 运动时间(ms)

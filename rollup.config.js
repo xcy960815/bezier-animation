@@ -19,6 +19,11 @@ export default {
             name: 'bezierAnimation',
         },
         {
+            format: 'esm',
+            file: 'dist/index.es.js',
+            name: 'bezierAnimation',
+        },
+        {
             format: 'umd',
             file: 'demo/index.umd.js',
             name: 'bezierAnimation',
@@ -49,7 +54,7 @@ export default {
         !isProduction && livereload(),
 
         typescript({
-            // tsconfig: getPath('./tsconfig.json'), // 导入本地ts配置
+            useTsconfigDeclarationDir: true,
             extensions: ['.js', '.ts', '.tsx'],
         }),
         sourceMaps(),

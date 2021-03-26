@@ -7,11 +7,18 @@
  * @param  {[number]} time [动画执行时间]
  * @param  {[function]} callback [抛物线执行完成后回调]
  */
-import { Config } from '../types/bezier'
+interface Config {
+    sourceClassName: string
+    targetClassName: string
+    moveClassName: string
+    radian?: number
+    time?: number
+    callback?: () => void
+}
 
 class Bezier {
     // 传进来的配置
-    config: Config = {
+    private config: Config = {
         sourceClassName: '',
         targetClassName: '',
         moveClassName: '',
@@ -27,20 +34,20 @@ class Bezier {
 
     time: number = 0
 
-    sourceNode: HTMLElement
-    sourceNodeX: number = 0
-    sourceNodeY: number = 0
+    private sourceNode: HTMLElement
+    private sourceNodeX: number = 0
+    private sourceNodeY: number = 0
 
-    targetNode: HTMLElement
-    targetNodeX: number = 0
-    targetNodeY: number = 0
+    private targetNode: HTMLElement
+    private targetNodeX: number = 0
+    private targetNodeY: number = 0
 
-    moveNode: HTMLElement
+    private moveNode: HTMLElement
 
-    diffx: number = 0
-    diffy: number = 0
+    private diffx: number = 0
+    private diffy: number = 0
 
-    speedx: number = 0
+    private speedx: number = 0
 
     constructor(config: Config) {
         this.config = config || {
@@ -51,19 +58,16 @@ class Bezier {
             time: 1000,
         }
         // 起点
-        // @ts-ignore
-        this.sourceNode =
-            this.getComponentFunction(this.config.sourceClassName) || null
+
+        this.sourceNode = this.getComponentFunction(this.config.sourceClassName)
 
         // 终点
-        // @ts-ignore
-        this.targetNode =
-            this.getComponentFunction(this.config.targetClassName) || null
+
+        this.targetNode = this.getComponentFunction(this.config.targetClassName)
 
         // 运动的元素
-        // @ts-ignore
-        this.moveNode =
-            this.getComponentFunction(this.config.moveClassName) || null
+
+        this.moveNode = this.getComponentFunction(this.config.moveClassName)
 
         // 曲线弧度
         this.radian = this.config.radian || 0.004
@@ -94,11 +98,11 @@ class Bezier {
         this.moveNode.style.top = `${this.sourceNodeY}px`
     }
     // 获取 目标节点、源节点、移动节点
-    getComponentFunction(selector: string): HTMLElement | null {
-        return document.querySelector(selector)
+    private getComponentFunction(selector: string): HTMLElement {
+        return document.querySelector(selector) as HTMLElement
     }
     // 确定动画方式(兼容各个浏览器的运动方法)
-    handleMarkSureDomMoveStyle(): string {
+    private handleMarkSureDomMoveStyle(): string {
         let domMoveStyle = 'position'
         const inputNode: HTMLInputElement = document.createElement('input')
         const placeholder = 'placeholder'
