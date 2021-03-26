@@ -18,7 +18,7 @@
     "bugs": {
         "url": "https://github.com/ChongYu-Yease/bezier-animation/issues"
     },
-    "types": "./types/index.d.ts",
+    "types": ".dist/typing/index.d.ts",
     "homepage": "https://github.com/ChongYu-Yease/bezier-animation#readme",
     "devDependencies": {
         "@babel/core": "^7.12.3",
