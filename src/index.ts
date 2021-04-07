@@ -149,7 +149,6 @@ class Bezier {
                 this.timer = 0
                 this.moveNode.style.left = `${this.targetNodeX}px`
                 this.moveNode.style.top = `${this.targetNodeY}px`
-
                 maskLayerNode.removeChild(this.moveNode)
                 document.body.removeChild(maskLayerNode)
                 return

@@ -19,8 +19,8 @@ export default {
             name: 'bezierAnimation',
         },
         {
-            format: 'esm',
-            file: 'dist/index.es.js',
+            format: 'es',
+            file: 'dist/index.esm.js',
             name: 'bezierAnimation',
         },
         {
@@ -43,7 +43,7 @@ export default {
             serve({
                 open: false,
                 host: 'localhost',
-                port: 9008,
+                port: 9908,
                 historyApiFallback: true,
                 contentBase: 'demo',
                 headers: {

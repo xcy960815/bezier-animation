@@ -3,7 +3,7 @@
     "version": "1.0.7",
     "description": "一个基于js实现贝塞尔曲线的动画库",
     "main": "dist/index.umd.js",
-    "module": "dist/index.es.js",
+    "module": "dist/index.esm.js",
     "scripts": {
         "dev": "NODE_ENV=development ENV=daily rollup -c -w",
         "build": "NODE_ENV=production ENV=prod rollup -c",
