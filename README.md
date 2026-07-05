@@ -2,6 +2,8 @@
 
 [中文文档](./README.zh-CN.md)
 
+Online Demo: https://xcy960815.github.io/bezier-animation/
+
 A small TypeScript animation library for Bezier/parabola motion, commonly used for "fly to cart" interactions. It works with selectors or real DOM elements, supports UMD and ESM builds, and keeps the legacy selector API compatible.
 
 ## Features

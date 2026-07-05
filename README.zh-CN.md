@@ -1,5 +1,7 @@
 # bezier-animation-plus
 
+在线 Demo：https://xcy960815.github.io/bezier-animation/
+
 一个基于 TypeScript 的贝塞尔/抛物线动画库，适合“加入购物车”“元素飞入目标区域”这类交互。它支持选择器和真实 DOM 节点两种写法，同时保留旧版 `sourceClassName`、`targetClassName`、`moveClassName` API。
 
 ## 特性
