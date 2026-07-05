@@ -1,178 +1,305 @@
 /**
- * js抛物线动画
- * @param  {[object]} sourceClassName [起点元素]
- * @param  {[object]} targetClassName [目标点元素]
- * @param  {[object]} moveClassName [要运动的元素]
- * @param  {[number]} radian [抛物线弧度]
- * @param  {[number]} time [动画执行时间]
- * @param  {[function]} callback [抛物线执行完成后回调]
+ * JavaScript Bezier/parabola animation.
+ *
+ * The legacy selector fields remain supported:
+ * `sourceClassName`, `targetClassName`, and `moveClassName`.
  */
-interface Config {
-    sourceClassName: string
-    targetClassName: string
-    moveClassName: string
+export type BezierElement = string | HTMLElement
+
+export interface BezierConfig {
+    /** Start element or selector. */
+    source?: BezierElement
+    /** Target element or selector. */
+    target?: BezierElement
+    /** Element or selector that moves along the path. */
+    element?: BezierElement
+
+    /** @deprecated Use `source` instead. */
+    sourceClassName?: string
+    /** @deprecated Use `target` instead. */
+    targetClassName?: string
+    /** @deprecated Use `element` instead. */
+    moveClassName?: string
+
+    /** Curve coefficient. Positive values bend downward, negative values bend upward. */
     radian?: number
+    /** Animation duration in milliseconds. */
     time?: number
+    /** Alias for `time`. */
+    duration?: number
+    /** Remove the moving element after the animation finishes. Defaults to `true`. */
+    removeOnFinish?: boolean
+    /** Called after the animation finishes. */
     callback?: () => void
+
+    /** @deprecated This option is no longer required and is ignored. */
+    multiNode?: boolean
+}
+
+const DEFAULT_RADIAN = 0.004
+const DEFAULT_TIME = 1000
+const FRAME_DELAY = 16
+
+interface Geometry {
+    sourceX: number
+    sourceY: number
+    targetX: number
+    targetY: number
 }
 
 class Bezier {
-    // 传进来的配置
-    private config: Config = {
-        sourceClassName: '',
-        targetClassName: '',
-        moveClassName: '',
-        radian: 0.004,
-        time: 1000,
-    }
+    /** Static self reference, compatible with `new pkg.Bezier()`. */
+    static Bezier: typeof Bezier
 
-    timer: number = 0
+    private config: BezierConfig
 
-    b: number = 0
-
-    radian: number = 0.004
-
-    time: number = 0
+    private radian: number
+    private time: number
+    private removeOnFinish: boolean
 
     private sourceNode: HTMLElement
-    private sourceNodeX: number = 0
-    private sourceNodeY: number = 0
-
     private targetNode: HTMLElement
-    private targetNodeX: number = 0
-    private targetNodeY: number = 0
-
     private moveNode: HTMLElement
 
-    private diffx: number = 0
-    private diffy: number = 0
+    // Parabola constant: y = radian * x^2 + b * x
+    private b = 0
+    // Horizontal speed(px/ms)
+    private speedx = 0
+    private diffx = 0
+    private diffy = 0
 
-    private speedx: number = 0
+    // requestAnimationFrame handle, 0 means idle.
+    private rafId = 0
+    // Move mode: 'position' or a transform property name.
+    private domMoveStyle = 'position'
+    private maskLayerNode: HTMLDivElement | null = null
 
-    constructor(config: Config) {
-        this.config = config || {
-            sourceClassName: '',
-            targetClassName: '',
-            moveClassName: '',
-            radian: 0.004,
-            time: 1000,
+    constructor(config: BezierConfig) {
+        if (!config) {
+            throw new Error('[bezier-animation] config is required')
         }
-        // 起点
+        this.config = config
 
-        this.sourceNode = this.getComponentFunction(this.config.sourceClassName)
+        this.sourceNode = this.getNode(
+            config.source !== undefined ? config.source : config.sourceClassName,
+            'source'
+        )
+        this.targetNode = this.getNode(
+            config.target !== undefined ? config.target : config.targetClassName,
+            'target'
+        )
+        this.moveNode = this.getNode(
+            config.element !== undefined ? config.element : config.moveClassName,
+            'element'
+        )
 
-        // 终点
+        this.radian = typeof config.radian === 'number' ? config.radian : DEFAULT_RADIAN
+        this.time = this.normalizeTime(config.duration, config.time)
+        this.removeOnFinish = config.removeOnFinish !== false
+        this.domMoveStyle = this.markSureDomMoveStyle()
+    }
 
-        this.targetNode = this.getComponentFunction(this.config.targetClassName)
+    /** Get an element from a selector or HTMLElement. */
+    private getNode(input: BezierElement | undefined, field: string): HTMLElement {
+        if (typeof input === 'string') {
+            const node = document.querySelector(input) as HTMLElement | null
+            if (!node) {
+                throw new Error(
+                    `[bezier-animation] ${field} selector "${input}" did not match any element`
+                )
+            }
+            return node
+        }
 
-        // 运动的元素
+        if (input instanceof HTMLElement) {
+            return input
+        }
 
-        this.moveNode = this.getComponentFunction(this.config.moveClassName)
+        throw new Error(`[bezier-animation] ${field} is required`)
+    }
 
-        // 曲线弧度
-        this.radian = this.config.radian || 0.004
+    private normalizeTime(duration?: number, time?: number): number {
+        const value = typeof duration === 'number' ? duration : time
+        return typeof value === 'number' && value > 0 ? value : DEFAULT_TIME
+    }
 
-        // 运动时间(ms)
-        this.time = this.config.time || 1000
+    /** Detect the best movement style for the current browser. */
+    private markSureDomMoveStyle(): string {
+        const style = document.createElement('div').style as any
+        const transformList = [
+            'transform',
+            'webkitTransform',
+            'msTransform',
+            'mozTransform',
+        ]
 
-        this.sourceNodeX = this.sourceNode.getBoundingClientRect().left
-        this.sourceNodeY = this.sourceNode.getBoundingClientRect().top
+        for (let index = 0; index < transformList.length; index += 1) {
+            const transform = transformList[index]
+            if (transform in style) {
+                return transform
+            }
+        }
 
-        this.targetNodeX = this.targetNode.getBoundingClientRect().left
-        this.targetNodeY = this.targetNode.getBoundingClientRect().top
+        return 'position'
+    }
 
-        this.diffx = this.targetNodeX - this.sourceNodeX
-        this.diffy = this.targetNodeY - this.sourceNodeY
+    /** Recompute coordinates before every run, including page scroll offset. */
+    private computeGeometry(): Geometry {
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0
 
-        this.speedx = this.diffx / this.time
+        const sourceRect = this.sourceNode.getBoundingClientRect()
+        const targetRect = this.targetNode.getBoundingClientRect()
 
-        // 已知a, 根据抛物线函数 y = a*x*x + b*x + c 将抛物线起点平移到坐标原点[0, 0]，终点随之平移，那么抛物线经过原点[0, 0] 得出c = 0;
-        // 终点平移后得出：y2-y1 = a*(x2 - x1)*(x2 - x1) + b*(x2 - x1)
-        // 即 diffy = a*diffx*diffx + b*diffx;
-        // 可求出常数b的值
+        const sourceX = sourceRect.left + scrollX
+        const sourceY = sourceRect.top + scrollY
+        const targetX = targetRect.left + scrollX
+        const targetY = targetRect.top + scrollY
+
+        this.diffx = targetX - sourceX
+        this.diffy = targetY - sourceY
+        this.speedx = this.diffx === 0 ? 0 : this.diffx / this.time
         this.b =
-            (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx
-        // 让需要移动的节点 初始化在出发点的位置上
-        this.moveNode.style.position = 'absolute'
-        this.moveNode.style.left = `${this.sourceNodeX}px`
-        this.moveNode.style.top = `${this.sourceNodeY}px`
-    }
-    // 获取 目标节点、源节点、移动节点
-    private getComponentFunction(selector: string): HTMLElement {
-        return document.querySelector(selector) as HTMLElement
-    }
-    // 确定动画方式(兼容各个浏览器的运动方法)
-    private handleMarkSureDomMoveStyle(): string {
-        let domMoveStyle = 'position'
-        const inputNode: HTMLInputElement = document.createElement('input')
-        const placeholder = 'placeholder'
-        if (placeholder in inputNode) {
-            const browserTypeList: Array<string> = ['', 'ms', 'moz', 'webkit']
-            browserTypeList.forEach((pre) => {
-                const transform: string = pre + (pre ? 'T' : 't') + 'ransform'
-                if (transform in inputNode.style) {
-                    domMoveStyle = transform
-                }
-            })
-        }
-        return domMoveStyle
+            this.diffx === 0
+                ? 0
+                : (this.diffy - this.radian * this.diffx * this.diffx) / this.diffx
+
+        return { sourceX, sourceY, targetX, targetY }
     }
 
-    move(): void {
-        if (this.timer) return //必须等每一个动画结束之后才能进行新的动画
-        const startTime: number = new Date().getTime()
-        const domMoveStyle: string = this.handleMarkSureDomMoveStyle()
-        // 记录运动节点的初始位置
-        this.moveNode.style.left = `${this.sourceNodeX}px`
-        this.moveNode.style.top = `${this.sourceNodeY}px`
-        const moveNodeStyle: any = this.moveNode.style
-        moveNodeStyle[domMoveStyle] = 'translate(0px,0px)'
-        let maskLayerNode: HTMLDivElement
-        // 创建全局遮罩层，这是在开启跨节点使用的时候
-        maskLayerNode = document.createElement('div')
+    /** Move the element to a relative coordinate. */
+    private applyPosition(x: number, y: number, baseX: number, baseY: number): void {
+        const style = this.moveNode.style as any
+        if (this.domMoveStyle === 'position') {
+            style.left = `${x + baseX}px`
+            style.top = `${y + baseY}px`
+        } else {
+            style[this.domMoveStyle] = `translate(${x}px, ${y}px)`
+        }
+    }
+
+    private prepareMoveNode(sourceX: number, sourceY: number): void {
+        this.moveNode.style.position = 'absolute'
+        this.moveNode.style.left = `${sourceX}px`
+        this.moveNode.style.top = `${sourceY}px`
+
+        if (this.domMoveStyle !== 'position') {
+            ;(this.moveNode.style as any)[this.domMoveStyle] = 'translate(0px, 0px)'
+        }
+    }
+
+    private createMaskLayer(): void {
+        const maskLayerNode = document.createElement('div')
         maskLayerNode.style.position = 'absolute'
         maskLayerNode.style.zIndex = '99'
         maskLayerNode.style.top = '0px'
         maskLayerNode.style.bottom = '0px'
         maskLayerNode.style.right = '0px'
         maskLayerNode.style.left = '0px'
+        maskLayerNode.style.pointerEvents = 'none'
         maskLayerNode.appendChild(this.moveNode)
         document.body.appendChild(maskLayerNode)
+        this.maskLayerNode = maskLayerNode
+    }
 
-        this.timer = window.setInterval(() => {
-            const endTime: number = new Date().getTime()
-            // 判断动画是否完成 判断依据就是 当前时间减去 开始时间 是否大于运动所需总时长
-            if (endTime - startTime > this.time) {
-                typeof this.config.callback === 'function' &&
-                    this.config.callback()
-                window.clearInterval(this.timer)
-                this.timer = 0
-                this.moveNode.style.left = `${this.targetNodeX}px`
-                this.moveNode.style.top = `${this.targetNodeY}px`
-                maskLayerNode.removeChild(this.moveNode)
-                document.body.removeChild(maskLayerNode)
+    private requestFrame(callback: FrameRequestCallback): number {
+        if (typeof window.requestAnimationFrame === 'function') {
+            return window.requestAnimationFrame(callback)
+        }
+
+        return window.setTimeout(callback, FRAME_DELAY)
+    }
+
+    private cancelFrame(frameId: number): void {
+        if (typeof window.cancelAnimationFrame === 'function') {
+            window.cancelAnimationFrame(frameId)
+            return
+        }
+
+        window.clearTimeout(frameId)
+    }
+
+    move(): this {
+        // Wait for the current animation before starting another run.
+        if (this.rafId) return this
+
+        const { sourceX, sourceY, targetX, targetY } = this.computeGeometry()
+        this.prepareMoveNode(sourceX, sourceY)
+        this.createMaskLayer()
+
+        const startTime = Date.now()
+
+        const step = () => {
+            const elapsed = Date.now() - startTime
+
+            if (elapsed >= this.time) {
+                this.finish(targetX, targetY)
                 return
             }
 
-            const x: number = this.speedx * (endTime - startTime)
-            const y: number = this.radian * x * x + this.b * x
-            if (domMoveStyle === 'position') {
-                this.moveNode.style.left = `${x + this.sourceNodeX}px`
-                this.moveNode.style.top = `${y + this.sourceNodeY}px`
-            } else {
-                const moveNodeStyle: any = this.moveNode.style
-                if (window.requestAnimationFrame) {
-                    window.requestAnimationFrame(() => {
-                        moveNodeStyle[domMoveStyle] = `translate(${x}px,${y}px)`
-                    })
-                } else {
-                    moveNodeStyle[domMoveStyle] = `translate(${x}px,${y}px)`
-                }
-            }
-        }, 15)
+            const progress = elapsed / this.time
+            const x = this.diffx === 0 ? 0 : this.speedx * elapsed
+            const y =
+                this.diffx === 0
+                    ? this.diffy * progress
+                    : this.radian * x * x + this.b * x
+
+            this.applyPosition(x, y, sourceX, sourceY)
+            this.rafId = this.requestFrame(step)
+        }
+
+        this.rafId = this.requestFrame(step)
+        return this
+    }
+
+    /** Finish the animation, clean the mask, and run the callback. */
+    private finish(targetX: number, targetY: number): void {
+        this.stopRaf()
+
+        if (this.domMoveStyle !== 'position') {
+            ;(this.moveNode.style as any)[this.domMoveStyle] = ''
+        }
+        this.moveNode.style.left = `${targetX}px`
+        this.moveNode.style.top = `${targetY}px`
+
+        this.cleanupMask(this.removeOnFinish)
+
+        if (typeof this.config.callback === 'function') {
+            this.config.callback()
+        }
+    }
+
+    private stopRaf(): void {
+        if (this.rafId) {
+            this.cancelFrame(this.rafId)
+            this.rafId = 0
+        }
+    }
+
+    private cleanupMask(removeMoveNode: boolean): void {
+        if (!this.maskLayerNode) {
+            return
+        }
+
+        if (!removeMoveNode && this.moveNode.parentNode === this.maskLayerNode) {
+            document.body.appendChild(this.moveNode)
+        }
+
+        if (this.maskLayerNode.parentNode) {
+            this.maskLayerNode.parentNode.removeChild(this.maskLayerNode)
+        }
+        this.maskLayerNode = null
+    }
+
+    /** Stop the animation and clean the temporary mask layer. */
+    destroy(): void {
+        this.stopRaf()
+        this.cleanupMask(this.removeOnFinish)
     }
 }
 
-export default {
-    Bezier,
-}
+// Static self reference, compatible with `new pkg.Bezier()`.
+Bezier.Bezier = Bezier
+
+export { Bezier }
+export default Bezier

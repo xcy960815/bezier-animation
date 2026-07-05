@@ -1,132 +1,648 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>bezier-animation-plus demo</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
+            html,
+            body {
+                min-height: 100%;
+            }
 
-        html,
-        body {
-            height: 100%;
-            width: 100%;
-            position: relative;
-        }
+            body {
+                background: #f6f7f9;
+                color: #1f2937;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                line-height: 1.5;
+            }
 
-        li {
-            list-style: none;
-        }
+            button {
+                border: 0;
+                cursor: pointer;
+                font: inherit;
+            }
 
-        .shop-list {
-            margin-top: 100px;
-            position: absolute;
-            left: 50%;
-            margin-left: -250px;
-            height: 500px;
-            width: 500px;
-            background: pink;
-            opacity: .6;
-            overflow-y: auto
-        }
+            .page {
+                width: min(1180px, calc(100% - 32px));
+                margin: 0 auto;
+                padding: 32px 0 56px;
+            }
 
-        .shop-detail {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            margin: 5px 0;
-            height: 150px;
-            background: greenyellow;
-        }
+            .header {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 24px;
+                margin-bottom: 24px;
+            }
 
-        span:nth-child(2n) {
-            cursor: pointer;
-        }
+            .title {
+                font-size: 28px;
+                font-weight: 760;
+                letter-spacing: 0;
+            }
 
-        .shop-car {
-            height: 200px;
-            width: 200px;
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-            background: yellow;
-            text-align: center;
-            line-height: 200px;
-        }
-    </style>
+            .subtitle {
+                margin-top: 6px;
+                color: #5f6b7a;
+                font-size: 14px;
+            }
 
-</head>
+            .cart {
+                display: grid;
+                min-width: 150px;
+                min-height: 96px;
+                place-items: center;
+                border: 2px solid #111827;
+                border-radius: 8px;
+                background: #ffd84d;
+                color: #111827;
+                font-weight: 760;
+                box-shadow: 0 8px 0 #111827;
+            }
 
-<body>
-    <div class="shop-car">购物车</div>
-    <ul class="shop-list">
-        <li class="shop-detail ">
-            <span class="shop-detail-1">商品1</span>
-            <span onClick="handleClickShop('shop-detail-1')">加入购物车</span>
-        </li>
-        <li class="shop-detail ">
-            <span class="shop-detail-2">商品2</span>
-            <span onClick="handleClickShop('shop-detail-2')">加入购物车</span>
-        </li>
-        <li class="shop-detail ">
-            <span class="shop-detail-3">商品3</span>
-            <span onClick="handleClickShop('shop-detail-3')">加入购物车</span>
-        </li>
-        <li class="shop-detail ">
-            <span class="shop-detail-4">商品4</span>
-            <span onClick="handleClickShop('shop-detail-4')">加入购物车</span>
-        </li>
-        <li class="shop-detail ">
-            <span class="shop-detail-5">商品5</span>
-            <span onClick="handleClickShop('shop-detail-5')">加入购物车</span>
-        </li>
-        <li class="shop-detail ">
-            <span class="shop-detail-6">商品6</span>
-            <span onClick="handleClickShop('shop-detail-6')">加入购物车</span>
-        </li>
-        <li class="shop-detail ">
-            <span class="shop-detail-7">商品7</span>
-            <span onClick="handleClickShop('shop-detail-7')">加入购物车</span>
-        </li>
-    </ul>
-    <script src="./index.umd.js"></script>
-    <!-- cdn  -->
-    <!-- <script type="text/javascript" src="https://unpkg.com/bezier-animation-plus@latest/dist/index.umd.js"></script> -->
+            .layout {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 320px;
+                gap: 20px;
+                align-items: start;
+            }
 
-    <script lang="typescript">
-        console.log(bezierAnimation)
-        function handleClickShop(className) {
-            const sourceClassName = "." + className
-            const sourceNode = document.querySelector(sourceClassName)
-            const sourceNodeStyle = sourceNode.getBoundingClientRect()
-            // 直接复制了源节点
-            const copyNode = sourceNode.cloneNode(true)
-            copyNode.style.width = 'auto'
-            copyNode.style.height = `${sourceNodeStyle.height}px`
-            copyNode.className = 'copy-node'
-            const targetClassName = "." + "shop-car"
-            document.body.appendChild(copyNode)
-            const moveClassName = ".copy-node"
-            const bezier = new bezierAnimation.Bezier({
-                radian: -0.0005,
-                time: 1000,
-                multiNode: true,
-                sourceClassName,
-                targetClassName,
-                moveClassName,
-                callback: () => {
-                    console.log("动画执行完成")
+            .section {
+                margin-bottom: 20px;
+                padding: 20px;
+                border: 1px solid #d9dee7;
+                border-radius: 8px;
+                background: #fff;
+            }
+
+            .section-title {
+                margin-bottom: 14px;
+                font-size: 18px;
+                font-weight: 720;
+            }
+
+            .product-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .product {
+                display: grid;
+                gap: 12px;
+                min-height: 190px;
+                padding: 14px;
+                border: 1px solid #e1e6ef;
+                border-radius: 8px;
+                background: #fbfcfe;
+            }
+
+            .product-thumb {
+                display: grid;
+                min-height: 76px;
+                place-items: center;
+                border-radius: 6px;
+                color: #fff;
+                font-weight: 760;
+            }
+
+            .product:nth-child(1) .product-thumb {
+                background: #2563eb;
+            }
+
+            .product:nth-child(2) .product-thumb {
+                background: #16a34a;
+            }
+
+            .product:nth-child(3) .product-thumb {
+                background: #dc2626;
+            }
+
+            .product:nth-child(4) .product-thumb {
+                background: #7c3aed;
+            }
+
+            .product:nth-child(5) .product-thumb {
+                background: #0891b2;
+            }
+
+            .product:nth-child(6) .product-thumb {
+                background: #ea580c;
+            }
+
+            .product-name {
+                font-weight: 700;
+            }
+
+            .product-desc {
+                color: #6b7280;
+                font-size: 13px;
+            }
+
+            .actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: auto;
+            }
+
+            .btn {
+                min-height: 36px;
+                padding: 0 13px;
+                border-radius: 6px;
+                background: #111827;
+                color: #fff;
+                font-weight: 680;
+            }
+
+            .btn.secondary {
+                border: 1px solid #c8d0dc;
+                background: #fff;
+                color: #1f2937;
+            }
+
+            .btn.warn {
+                background: #b45309;
+            }
+
+            .case-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .case {
+                display: grid;
+                gap: 12px;
+                min-height: 210px;
+                padding: 14px;
+                border: 1px solid #e1e6ef;
+                border-radius: 8px;
+                background: #fbfcfe;
+            }
+
+            .case-stage {
+                position: relative;
+                min-height: 122px;
+                border: 1px dashed #b8c1ce;
+                border-radius: 8px;
+                background: #fff;
+            }
+
+            .dot,
+            .target-dot {
+                position: absolute;
+                display: grid;
+                width: 44px;
+                height: 44px;
+                place-items: center;
+                border-radius: 50%;
+                color: #fff;
+                font-size: 12px;
+                font-weight: 760;
+            }
+
+            .dot {
+                left: 36px;
+                top: 38px;
+                background: #2563eb;
+            }
+
+            .target-dot {
+                right: 36px;
+                bottom: 28px;
+                background: #111827;
+            }
+
+            .vertical-source {
+                left: calc(50% - 22px);
+                top: 12px;
+            }
+
+            .vertical-target {
+                left: calc(50% - 22px);
+                top: 70px;
+            }
+
+            .legacy-source {
+                left: 24px;
+                top: 20px;
+                background: #0891b2;
+            }
+
+            .legacy-target {
+                right: 24px;
+                top: 58px;
+            }
+
+            .keep-target {
+                right: 28px;
+                top: 38px;
+            }
+
+            .moving-node {
+                display: grid;
+                min-width: 44px;
+                min-height: 32px;
+                place-items: center;
+                padding: 0 10px;
+                border-radius: 999px;
+                background: #111827;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 760;
+                white-space: nowrap;
+            }
+
+            .panel {
+                position: sticky;
+                top: 20px;
+                display: grid;
+                gap: 20px;
+            }
+
+            .log {
+                max-height: 280px;
+                overflow: auto;
+                padding: 12px;
+                border: 1px solid #d9dee7;
+                border-radius: 8px;
+                background: #fff;
+                color: #4b5563;
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 12px;
+            }
+
+            .log-line + .log-line {
+                margin-top: 7px;
+            }
+
+            .counter {
+                font-size: 34px;
+                font-weight: 780;
+            }
+
+            @media (max-width: 860px) {
+                .header,
+                .layout {
+                    grid-template-columns: 1fr;
                 }
+
+                .header {
+                    display: grid;
+                }
+
+                .cart,
+                .panel {
+                    position: static;
+                }
+
+                .product-grid,
+                .case-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <main class="page">
+            <header class="header">
+                <div>
+                    <h1 class="title">bezier-animation-plus demo</h1>
+                    <p class="subtitle">
+                        覆盖克隆节点、多次点击、垂直路径、旧 API、保留运动节点等测试场景。
+                    </p>
+                </div>
+                <div class="cart js-cart">
+                    <span>购物车</span>
+                    <strong class="counter js-count">0</strong>
+                </div>
+            </header>
+
+            <div class="layout">
+                <div>
+                    <section class="section">
+                        <h2 class="section-title">商品飞入购物车</h2>
+                        <div class="product-grid">
+                            <article class="product">
+                                <div class="product-thumb">A1</div>
+                                <div>
+                                    <p class="product-name">蓝莓奶酪</p>
+                                    <p class="product-desc">负弧度，向上抛物线。</p>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn js-add" data-radian="-0.0008">
+                                        加入购物车
+                                    </button>
+                                </div>
+                            </article>
+                            <article class="product">
+                                <div class="product-thumb">B2</div>
+                                <div>
+                                    <p class="product-name">青柠气泡</p>
+                                    <p class="product-desc">短时长，适合快速反馈。</p>
+                                </div>
+                                <div class="actions">
+                                    <button
+                                        class="btn js-add"
+                                        data-duration="650"
+                                        data-radian="-0.0005"
+                                    >
+                                        加入购物车
+                                    </button>
+                                </div>
+                            </article>
+                            <article class="product">
+                                <div class="product-thumb">C3</div>
+                                <div>
+                                    <p class="product-name">番茄意面</p>
+                                    <p class="product-desc">正弧度，向下抛物线。</p>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn js-add" data-radian="0.0005">
+                                        加入购物车
+                                    </button>
+                                </div>
+                            </article>
+                            <article class="product">
+                                <div class="product-thumb">D4</div>
+                                <div>
+                                    <p class="product-name">葡萄冰沙</p>
+                                    <p class="product-desc">从滚动容器内飞向固定目标。</p>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn js-add" data-radian="-0.0003">
+                                        加入购物车
+                                    </button>
+                                </div>
+                            </article>
+                            <article class="product">
+                                <div class="product-thumb">E5</div>
+                                <div>
+                                    <p class="product-name">海盐曲奇</p>
+                                    <p class="product-desc">
+                                        默认 duration 和新版 element API。
+                                    </p>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn js-add">加入购物车</button>
+                                </div>
+                            </article>
+                            <article class="product">
+                                <div class="product-thumb">F6</div>
+                                <div>
+                                    <p class="product-name">橙子拿铁</p>
+                                    <p class="product-desc">用于连续点击和批量触发。</p>
+                                </div>
+                                <div class="actions">
+                                    <button
+                                        class="btn js-add"
+                                        data-duration="1200"
+                                        data-radian="-0.0007"
+                                    >
+                                        加入购物车
+                                    </button>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="actions" style="margin-top: 16px">
+                            <button class="btn secondary js-batch">批量触发</button>
+                            <button class="btn secondary js-reset-count">重置数量</button>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <h2 class="section-title">专项场景</h2>
+                        <div class="case-grid">
+                            <article class="case">
+                                <h3>垂直路径</h3>
+                                <div class="case-stage">
+                                    <span class="dot vertical-source js-vertical-source"
+                                        >起</span
+                                    >
+                                    <span
+                                        class="target-dot vertical-target js-vertical-target"
+                                        >终</span
+                                    >
+                                </div>
+                                <button class="btn js-vertical">测试垂直移动</button>
+                            </article>
+
+                            <article class="case">
+                                <h3>旧 selector API</h3>
+                                <div class="case-stage">
+                                    <span class="dot legacy-source">旧</span>
+                                    <span class="target-dot legacy-target">终</span>
+                                </div>
+                                <button class="btn js-legacy">测试旧写法</button>
+                            </article>
+
+                            <article class="case">
+                                <h3>保留运动节点</h3>
+                                <div class="case-stage">
+                                    <span class="dot js-keep-source">留</span>
+                                    <span class="target-dot keep-target js-keep-target"
+                                        >终</span
+                                    >
+                                </div>
+                                <div class="actions">
+                                    <button class="btn js-keep">保留到终点</button>
+                                    <button class="btn secondary js-clear-kept">
+                                        清理保留节点
+                                    </button>
+                                </div>
+                            </article>
+
+                            <article class="case">
+                                <h3>销毁动画</h3>
+                                <div class="case-stage">
+                                    <span class="dot js-destroy-source">停</span>
+                                    <span class="target-dot js-destroy-target">终</span>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn js-destroy-start">
+                                        开始慢动画
+                                    </button>
+                                    <button class="btn warn js-destroy-stop">
+                                        destroy
+                                    </button>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="panel">
+                    <section class="section">
+                        <h2 class="section-title">测试状态</h2>
+                        <div class="log js-log"></div>
+                    </section>
+                </aside>
+            </div>
+        </main>
+
+        <script src="./index.umd.js"></script>
+        <script>
+            const Bezier = bezierAnimation.Bezier
+            const cartNode = document.querySelector('.js-cart')
+            const countNode = document.querySelector('.js-count')
+            const logNode = document.querySelector('.js-log')
+            let cartCount = 0
+            let activeDestroyAnimation = null
+
+            function log(message) {
+                const line = document.createElement('div')
+                line.className = 'log-line'
+                line.textContent = `${new Date().toLocaleTimeString()} ${message}`
+                logNode.prepend(line)
+            }
+
+            function updateCount(value) {
+                cartCount = value
+                countNode.textContent = String(cartCount)
+            }
+
+            function createMovingNode(sourceNode, text) {
+                const rect = sourceNode.getBoundingClientRect()
+                const node = document.createElement('div')
+                node.className = 'moving-node'
+                node.textContent = text
+                node.style.width = `${Math.max(rect.width, 44)}px`
+                node.style.height = `${Math.max(rect.height, 32)}px`
+                document.body.appendChild(node)
+                return node
+            }
+
+            function runToCart(button) {
+                const product = button.closest('.product')
+                const sourceNode = product.querySelector('.product-thumb')
+                const movingNode = createMovingNode(sourceNode, sourceNode.textContent)
+                const duration = Number(button.dataset.duration || 1000)
+                const radian = Number(button.dataset.radian || -0.0005)
+
+                new Bezier({
+                    source: sourceNode,
+                    target: cartNode,
+                    element: movingNode,
+                    duration,
+                    radian,
+                    callback: () => {
+                        updateCount(cartCount + 1)
+                        log(`${sourceNode.textContent} 已飞入购物车`)
+                    },
+                }).move()
+            }
+
+            document.querySelectorAll('.js-add').forEach((button) => {
+                button.addEventListener('click', () => runToCart(button))
             })
-            bezier.move()
-        }
 
-    </script>
+            document.querySelector('.js-batch').addEventListener('click', () => {
+                document.querySelectorAll('.js-add').forEach((button, index) => {
+                    window.setTimeout(() => runToCart(button), index * 120)
+                })
+                log('批量触发商品动画')
+            })
 
-</body>
+            document.querySelector('.js-reset-count').addEventListener('click', () => {
+                updateCount(0)
+                log('购物车数量已重置')
+            })
 
+            document.querySelector('.js-vertical').addEventListener('click', () => {
+                const sourceNode = document.querySelector('.js-vertical-source')
+                const targetNode = document.querySelector('.js-vertical-target')
+                const movingNode = createMovingNode(sourceNode, 'V')
+
+                new Bezier({
+                    source: sourceNode,
+                    target: targetNode,
+                    element: movingNode,
+                    duration: 800,
+                    radian: -0.001,
+                    callback: () => log('垂直路径动画完成'),
+                }).move()
+            })
+
+            document.querySelector('.js-legacy').addEventListener('click', () => {
+                const sourceNode = document.querySelector('.legacy-source')
+                const movingNode = createMovingNode(sourceNode, '旧')
+                const className = `legacy-move-${Date.now()}`
+                movingNode.classList.add(className)
+
+                new Bezier({
+                    sourceClassName: '.legacy-source',
+                    targetClassName: '.legacy-target',
+                    moveClassName: `.${className}`,
+                    duration: 900,
+                    radian: -0.0006,
+                    callback: () => log('旧 selector API 动画完成'),
+                }).move()
+            })
+
+            document.querySelector('.js-keep').addEventListener('click', () => {
+                const sourceNode = document.querySelector('.js-keep-source')
+                const targetNode = document.querySelector('.js-keep-target')
+                const movingNode = createMovingNode(sourceNode, '保留')
+                movingNode.classList.add('kept-node')
+
+                new Bezier({
+                    source: sourceNode,
+                    target: targetNode,
+                    element: movingNode,
+                    duration: 900,
+                    removeOnFinish: false,
+                    callback: () => log('运动节点已保留在终点'),
+                }).move()
+            })
+
+            document.querySelector('.js-clear-kept').addEventListener('click', () => {
+                document.querySelectorAll('.kept-node').forEach((node) => node.remove())
+                log('已清理保留节点')
+            })
+
+            document.querySelector('.js-destroy-start').addEventListener('click', () => {
+                const sourceNode = document.querySelector('.js-destroy-source')
+                const targetNode = document.querySelector('.js-destroy-target')
+                const movingNode = createMovingNode(sourceNode, '慢')
+
+                activeDestroyAnimation = new Bezier({
+                    source: sourceNode,
+                    target: targetNode,
+                    element: movingNode,
+                    duration: 3000,
+                    radian: -0.0004,
+                    callback: () => {
+                        activeDestroyAnimation = null
+                        log('慢动画自然完成')
+                    },
+                })
+
+                activeDestroyAnimation.move()
+                log('慢动画已开始')
+            })
+
+            document.querySelector('.js-destroy-stop').addEventListener('click', () => {
+                if (activeDestroyAnimation) {
+                    activeDestroyAnimation.destroy()
+                    activeDestroyAnimation = null
+                    log('慢动画已 destroy')
+                    return
+                }
+
+                log('当前没有可销毁动画')
+            })
+
+            log('demo ready')
+        </script>
+    </body>
 </html>
